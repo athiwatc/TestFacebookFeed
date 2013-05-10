@@ -1,6 +1,9 @@
 package com.example.testfacebookfeed;
 
+import java.util.Arrays;
+
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -8,12 +11,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.facebook.Request;
+import com.facebook.Response;
 import com.facebook.Session;
 import com.facebook.SessionState;
 import com.facebook.UiLifecycleHelper;
+import com.facebook.model.GraphObject;
 import com.facebook.widget.LoginButton;
-
-import com.facebook.Request;
 
 public class MainFragment extends Fragment {
 	
@@ -74,11 +78,41 @@ public class MainFragment extends Fragment {
 	private void onSessionStateChange(Session session, SessionState state, Exception exception) {
 	    if (state.isOpened()) {
 	        Log.i(TAG, "Logged in...");
-	        Request r =  new Request(session, "me/home");
-	        Log.i("result", r.toString()); //HERE
+	        
+	        Request.executeGraphPathRequestAsync(session, "me/home", new Request.Callback() {
+				
+				@Override
+				public void onCompleted(Response response) {
+					Log.i("asd", response.toString());
+					
+				}
+			});
+	        
+	        //(new FacebookGetRequest()).execute(session);
+	        
 	    } else if (state.isClosed()) {
 	        Log.i(TAG, "Logged out...");
 	    }
+	}
+	
+	class FacebookGetRequest extends AsyncTask<Session, Void, Void> {
+		
+
+		@Override
+		protected Void doInBackground(Session... params) {
+			
+
+	        Request r =  new Request(params[0], "me/home");
+			
+
+	        Response res = Request.executeAndWait(r);
+
+	        GraphObject go = res.getGraphObject();
+
+	        //Log.i("result", go.toString()); //HERE
+			return null;
+		}
+		
 	}
 
 	
@@ -90,6 +124,7 @@ public class MainFragment extends Fragment {
 	    
 	    LoginButton authButton = (LoginButton) view.findViewById(R.id.authButton);
 	    authButton.setFragment(this);
+	    authButton.setReadPermissions(Arrays.asList("read_stream"));
 
 	    return view;
 	}
